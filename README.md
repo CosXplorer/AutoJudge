@@ -410,7 +410,7 @@ def predict_difficulty(features):
 
 ```bash
 git clone https://github.com/CosXplorer/AutoJudge.git
-cd autojudge_v2
+cd AutoJudge
 ```
 
 ### Step 2: Install Dependencies
