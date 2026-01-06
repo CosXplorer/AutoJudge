@@ -28,8 +28,7 @@ IIT Roorkee
 
 ## 🔗 Project Links
 
-- **📹 Demo Video:** [Watch Project Demo](YOUR_DEMO_VIDEO_LINK)
-- **🌐 Live Demo:** [Try AutoJudge](YOUR_DEPLOYED_LINK)
+- **📹 Demo Video:** [Watch Project Demo](https://drive.google.com/file/d/1Xdz31RR-uCLbIeTdUTb99WXgtprEsRt3/view?usp=sharing)
 - **💻 GitHub Repository:** [View Source Code](https://github.com/CosXplorer/AutoJudge.git)
 - **📄 Project Report:** [Download PDF Report](report_AutoJudge.pdf)
 
