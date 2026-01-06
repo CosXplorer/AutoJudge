@@ -30,7 +30,7 @@ IIT Roorkee
 
 - **📹 Demo Video:** [Watch Project Demo](YOUR_DEMO_VIDEO_LINK)
 - **🌐 Live Demo:** [Try AutoJudge](YOUR_DEPLOYED_LINK)
-- **💻 GitHub Repository:** [View Source Code](YOUR_GITHUB_REPO_LINK)
+- **💻 GitHub Repository:** [View Source Code](https://github.com/CosXplorer/AutoJudge.git)
 - **📄 Project Report:** [Download PDF Report](report_AutoJudge.pdf)
 
 ---
@@ -409,7 +409,7 @@ def predict_difficulty(features):
 ### Step 1: Clone Repository
 
 ```bash
-git clone YOUR_GITHUB_REPO_LINK
+git clone https://github.com/CosXplorer/AutoJudge.git
 cd autojudge_v2
 ```
 
