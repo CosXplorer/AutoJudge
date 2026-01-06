@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoJudge - Problem Difficulty Predictor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .logo i {
+            font-size: 2.5em;
+        }
+
+        h1 {
+            font-size: 2.8em;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-panel {
+            background: #f8fafc;
+            padding: 30px;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .results-panel {
+            background: white;
+            padding: 30px;
+        }
+
+        .section-title {
+            color: #1e293b;
+            font-size: 1.6em;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #3b82f6;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .predict-btn {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+        }
+
+        .result-card.easy {
+            border-color: #10b981;
+        }
+
+        .result-card.medium {
+            border-color: #f59e0b;
+        }
+
+        .result-card.hard {
+            border-color: #ef4444;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-size: 1.2em;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-size: 2.5em;
+            font-weight: 800;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .result-class.easy {
+            color: #10b981;
+        }
+
+        .result-class.medium {
+            color: #f59e0b;
+        }
+
+        .result-class.hard {
+            color: #ef4444;
+        }
+
+        .score-bar {
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+            border-radius: 5px;
+            transition: width 1s ease;
+        }
+
+        .probability-chart {
+            margin-top: 20px;
+        }
+
+        .prob-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .prob-label {
+            text-transform: capitalize;
+            font-weight: 600;
+            width: 80px;
+        }
+
+        .prob-bar {
+            flex-grow: 1;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .prob-fill.easy {
+            background: #10b981;
+        }
+
+        .prob-fill.medium {
+            background: #f59e0b;
+        }
+
+        .prob-fill.hard {
+            background: #ef4444;
+        }
+
+        .prob-value {
+            font-weight: 600;
+            width: 60px;
+            text-align: right;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .feature-value {
+            font-size: 1.8em;
+            font-weight: 800;
+            color: #3b82f6;
+            margin: 5px 0;
+        }
+
+        .feature-label {
+            font-size: 0.9em;
+            color: #64748b;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .welcome-icon {
+            font-size: 3em;
+            color: #3b82f6;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+
+        .sample-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .sample-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #3b82f6;
+            background: white;
+            color: #3b82f6;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sample-btn:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.9em;
+        }
+
+        .api-status {
+            margin-top: 10px;
+            font-family: 'Consolas', monospace;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-gavel"></i>
+                <h1>AutoJudge</h1>
+            </div>
+            <p class="subtitle">Machine Learning Powered Problem Difficulty Predictor</p>
+        </div>
+
+        <div class="content">
+            <!-- Left Panel: Input Form -->
+            <div class="input-panel">
+                <div class="section-title">
+                    <i class="fas fa-edit"></i>
+                    <span>Problem Input</span>
+                </div>
+
+                <div class="error-message" id="errorMessage"></div>
+
+                <!-- Sample Problems -->
+                <div class="sample-buttons">
+                    <button class="sample-btn" onclick="loadSample('easy')">Easy</button>
+                    <button class="sample-btn" onclick="loadSample('medium')">Medium</button>
+                    <button class="sample-btn" onclick="loadSample('hard')">Hard</button>
+                </div>
+
+                <!-- Form -->
+                <div class="form-group">
+                    <label for="title">Problem Title</label>
+                    <input type="text" id="title" placeholder="e.g., Watermelon, Binary Search">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Problem Description</label>
+                    <textarea id="description" placeholder="Describe the problem statement..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputDescription">Input Description</label>
+                    <textarea id="inputDescription" placeholder="Describe the input format..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="outputDescription">Output Description</label>
+                    <textarea id="outputDescription" placeholder="Describe the output format..."></textarea>
+                </div>
+
+                <button class="predict-btn" id="predictBtn" onclick="predictDifficulty()">
+                    <i class="fas fa-brain"></i>
+                    <span>Predict Difficulty</span>
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing problem difficulty...</p>
+                </div>
+            </div>
+
+            <!-- Right Panel: Results -->
+            <div class="results-panel">
+                <div class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Prediction Results</span>
+                </div>
+
+                <!-- Results Container -->
+                <div class="results-container" id="resultsContainer" style="display: none;">
+                    <!-- Difficulty Class -->
+                    <div class="result-card" id="classResultCard">
+                        <div class="result-header">
+                            <div class="result-title">Difficulty Class</div>
+                            <div class="result-class" id="predictedClassTag">Easy</div>
+                        </div>
+                        <div class="result-value result-class" id="predictedClassValue">Easy</div>
+
+                        <div class="probability-chart" id="probabilityChart">
+                            <!-- Will be populated -->
+                        </div>
+                    </div>
+
+                    <!-- Difficulty Score -->
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-title">Difficulty Score</div>
+                            <div id="predictedScoreValue">3.8</div>
+                        </div>
+                        <div class="result-value" id="predictedScore">3.8</div>
+                        <p style="text-align: center; color: #64748b; margin: 10px 0;">Out of 10.0</p>
+
+                        <div class="score-bar">
+                            <div class="score-fill" id="scoreFill" style="width: 38%"></div>
+                        </div>
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 0.9em; color: #64748b; margin-top: 5px;">
+                            <span>1.0 (Easy)</span>
+                            <span>5.5 (Medium)</span>
+                            <span>10.0 (Hard)</span>
+                        </div>
+                    </div>
+
+                    <!-- Extracted Features -->
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-title">Extracted Features</div>
+                        </div>
+                        <div class="features-grid" id="featuresGrid">
+                            <!-- Will be populated -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Welcome Message -->
+                <div class="welcome-message" id="welcomeMessage">
+                    <div class="welcome-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>No Prediction Yet</h3>
+                    <p>Enter a problem and click "Predict Difficulty" to see results</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>AutoJudge v2.0 | Powered by Machine Learning Models</p>
+            <div class="api-status">
+                <span id="apiStatus">API: http://localhost:5000</span>
+                <span id="connectionStatus" style="margin-left: 15px;">●</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - FIXED: Removed /api prefix
+        const API_URL = 'http://localhost:5000';
+
+        // Sample problems
+        const SAMPLE_PROBLEMS = {
+            easy: {
+                title: "Watermelon",
+                description: "One hot summer day Pete and his friend Billy decided to buy a watermelon. They chose the biggest and the ripest one, in their opinion. After that the watermelon was weighed, and the scales showed w kilos. They rushed home, dying of thirst, and decided to divide the berry, however they faced a hard problem. Pete and Billy are great fans of even numbers, that's why they want to divide the watermelon in such a way that each of the two parts weighs even number of kilos, at the same time it is not obligatory that the parts are equal. The boys are extremely tired and want to start their meal as soon as possible, that's why you should help them and find out, if they can divide the watermelon in the way they want. For sure, each of them should get a part of positive weight.",
+                inputDescription: "The first (and the only) input line contains integer number w (1 ≤ w ≤ 100) — the weight of the watermelon bought by the boys.",
+                outputDescription: "Print YES, if the boys can divide the watermelon into two parts, each weighing an even number of kilos; and NO in the opposite case."
+            },
+            medium: {
+                title: "Binary Search",
+                description: "Given a sorted array of n integers, find if a target value x exists. Use binary search algorithm. The array is sorted in non-decreasing order. You must implement the O(log n) solution.",
+                inputDescription: "First line contains two integers n and x (1 ≤ n ≤ 10^5, -10^9 ≤ x ≤ 10^9). Second line contains n space-separated integers in non-decreasing order.",
+                outputDescription: "Print YES if x exists in the array, otherwise print NO."
+            },
+            hard: {
+                title: "Pinball",
+                description: "You are playing a pinball-like game on an h×w grid. The ball starts at the center of the cell marked 'S'. Each cell may be either a solid block wall (#) that reflects the ball without entering, a thin oblique wall (\\ or /) that reflects the ball depending on orientation, or a free cell (.) through which the ball travels normally. The ball moves continuously and collisions are perfectly elastic. You may also destroy any oblique wall at any time, permanently turning it into a free cell. Your goal is to determine whether the ball can be made to escape the grid by choosing an initial direction (U, D, L, or R) and optionally destroying some oblique walls. If escape is possible, you must minimize the number of destroyed oblique walls and output the exact destruction times.",
+                inputDescription: "First line: two integers h and w (1 ≤ h, w ≤ 1000) — the grid size. Next h lines: a string of length w describing the grid. Each character is one of '.', '#', '\\\\', '/', or 'S', where 'S' denotes the starting cell (which is always free).",
+                outputDescription: "If escape is impossible, print 'NO'. Otherwise, print 'YES' on the first line. Then print a character d ∈ {U, D, L, R} — the initial direction of the ball. Next print k — the minimum number of oblique walls to destroy. Then print k lines, each containing three integers ti, ri, ci — meaning the oblique wall at row ri and column ci is destroyed at time ti seconds after the start. The operations must be printed in non-decreasing order of ti. All ti must satisfy 0 ≤ ti ≤ 10^7."
+            }
+
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            checkApiConnection();
+            setupKeyboardShortcuts();
+            //loadSample('easy'); // Load easy sample by default
+        });
+
+        // Check API connection
+        async function checkApiConnection() {
+            const statusEl = document.getElementById('connectionStatus');
+
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                if (response.ok) {
+                    statusEl.innerHTML = '<span style="color: #10b981;">● Connected</span>';
+                    return true;
+                } else {
+                    statusEl.innerHTML = '<span style="color: #ef4444;">● Error</span>';
+                    return false;
+                }
+            } catch (error) {
+                console.error('API connection error:', error);
+                statusEl.innerHTML = '<span style="color: #ef4444;">● Disconnected</span>';
+                return false;
+            }
+        }
+
+        // Load sample problem
+        function loadSample(difficulty) {
+            const sample = SAMPLE_PROBLEMS[difficulty];
+            if (!sample) return;
+
+            document.getElementById('title').value = sample.title;
+            document.getElementById('description').value = sample.description;
+            document.getElementById('inputDescription').value = sample.inputDescription;
+            document.getElementById('outputDescription').value = sample.outputDescription;
+
+            // Show success message
+            showMessage(`Loaded ${difficulty} sample problem!`, 'success');
+        }
+
+        // Show message
+        function showMessage(message, type = 'info') {
+            const messageEl = document.createElement('div');
+            messageEl.textContent = message;
+            messageEl.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                border-radius: 10px;
+                color: white;
+                font-weight: 600;
+                z-index: 1000;
+                animation: slideInRight 0.3s ease;
+                ${type === 'success' ? 'background: #10b981;' : ''}
+                ${type === 'error' ? 'background: #ef4444;' : ''}
+                ${type === 'info' ? 'background: #3b82f6;' : ''}
+            `;
+
+            document.body.appendChild(messageEl);
+
+            setTimeout(() => {
+                messageEl.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => messageEl.remove(), 300);
+            }, 3000);
+        }
+
+        // Show error
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+
+        // Main prediction function
+        async function predictDifficulty() {
+            // Get form values
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const inputDescription = document.getElementById('inputDescription').value.trim();
+            const outputDescription = document.getElementById('outputDescription').value.trim();
+
+            // Validate inputs
+            if (!title || !description || !inputDescription || !outputDescription) {
+                showError('Please fill in all fields before predicting');
+                return;
+            }
+
+            // Show loading state
+            const predictBtn = document.getElementById('predictBtn');
+            const loading = document.getElementById('loading');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            predictBtn.disabled = true;
+            predictBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Analyzing...</span>';
+            loading.style.display = 'block';
+
+            // Hide welcome message
+            welcomeMessage.style.display = 'none';
+            resultsContainer.style.display = 'none';
+
+            try {
+                // Prepare request data
+                const requestData = {
+                    title: title,
+                    description: description,
+                    inputDescription: inputDescription,
+                    outputDescription: outputDescription
+                };
+
+                // Send prediction request
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Prediction failed');
+                }
+
+                // Update UI with results
+                updateResults(result);
+
+                // Show results
+                resultsContainer.style.display = 'block';
+                welcomeMessage.style.display = 'none';
+
+                // Show success message
+                showMessage('Prediction completed successfully!', 'success');
+
+            } catch (error) {
+                console.error('Prediction error:', error);
+                showError(`Prediction error: ${error.message}`);
+
+                // Show welcome message again
+                welcomeMessage.style.display = 'block';
+            } finally {
+                // Reset loading state
+                predictBtn.disabled = false;
+                predictBtn.innerHTML = '<i class="fas fa-brain"></i><span>Predict Difficulty</span>';
+                loading.style.display = 'none';
+            }
+        }
+
+        // Update UI with results
+        function updateResults(result) {
+            const prediction = result.prediction;
+            const features = result.features;
+
+            // Update difficulty class
+            const predictedClass = prediction.class.toLowerCase();
+            document.getElementById('predictedClassTag').textContent = prediction.class;
+            document.getElementById('predictedClassValue').textContent = prediction.class;
+
+            // Update class result card styling
+            const classCard = document.getElementById('classResultCard');
+            classCard.className = `result-card ${predictedClass}`;
+            document.getElementById('predictedClassValue').className = `result-value result-class ${predictedClass}`;
+
+            // Update difficulty score
+            const predictedScore = prediction.score;
+            document.getElementById('predictedScore').textContent = predictedScore;
+            document.getElementById('predictedScoreValue').textContent = predictedScore;
+
+            // Update score bar
+            const scorePercentage = Math.min((predictedScore / 10) * 100, 100);
+            document.getElementById('scoreFill').style.width = `${scorePercentage}%`;
+
+            // Update probability chart
+            updateProbabilityChart(prediction.classProbabilities);
+
+            // Update features grid
+            updateFeaturesGrid(features);
+        }
+
+        // Update probability chart
+        function updateProbabilityChart(probabilities) {
+            const chart = document.getElementById('probabilityChart');
+            chart.innerHTML = '';
+
+            if (!probabilities) {
+                chart.innerHTML = '<p style="color: #64748b; text-align: center;">Probability data not available</p>';
+                return;
+            }
+
+            Object.entries(probabilities).forEach(([className, probability]) => {
+                const percentage = (probability * 100).toFixed(1);
+
+                const probItem = document.createElement('div');
+                probItem.className = 'prob-item';
+
+                probItem.innerHTML = `
+                    <div class="prob-label">${className}</div>
+                    <div class="prob-bar">
+                        <div class="prob-fill ${className}" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="prob-value">${percentage}%</div>
+                `;
+
+                chart.appendChild(probItem);
+            });
+        }
+
+        // Update features grid
+        function updateFeaturesGrid(features) {
+            const grid = document.getElementById('featuresGrid');
+            grid.innerHTML = '';
+
+            if (!features) return;
+
+            const featureItems = [
+                { label: 'Text Length', value: features.textLength, icon: 'fas fa-ruler' },
+                { label: 'Word Count', value: features.wordCount, icon: 'fas fa-font' },
+                { label: 'Math Symbols', value: features.mathSymbols, icon: 'fas fa-calculator' },
+                { label: 'Keywords', value: features.advancedKeywords, icon: 'fas fa-key' }
+            ];
+
+            featureItems.forEach(item => {
+                const featureEl = document.createElement('div');
+                featureEl.className = 'feature-item';
+
+                featureEl.innerHTML = `
+                    <i class="${item.icon}" style="font-size: 1.2em; color: #3b82f6; margin-bottom: 8px;"></i>
+                    <div class="feature-value">${item.value}</div>
+                    <div class="feature-label">${item.label}</div>
+                `;
+
+                grid.appendChild(featureEl);
+            });
+        }
+
+        // Setup keyboard shortcuts
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', function (e) {
+                // Ctrl/Cmd + Enter to predict
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    predictDifficulty();
+                }
+
+                // Number keys for samples
+                if (e.key === '1') loadSample('easy');
+                if (e.key === '2') loadSample('medium');
+                if (e.key === '3') loadSample('hard');
+            });
+        }
+    </script>
+</body>
+
+</html>
